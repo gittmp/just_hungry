@@ -37,7 +37,7 @@ class FrontEnd(object):
             if req == 1:
                 resp = ["types", hungry.foodTypes()]
             else:
-                resp = [False, "cannot retrieve type"]
+                resp = [False, "Cannot retrieve type"]
 
         elif req[0] == "rests":
 
@@ -45,9 +45,9 @@ class FrontEnd(object):
             rests = hungry.restaurants(r_type)
 
             if rests[0]:
-                resp = rests[1]
+                resp = rests
             else:
-                resp = [False]
+                resp = [False, rests[1]]
 
         elif req[0] == "menu":
 
@@ -55,21 +55,16 @@ class FrontEnd(object):
             menu = hungry.menu(rest)
 
             if menu[0]:
-                resp = menu[1]
+                resp = menu
             else:
-                resp = [False]
+                resp = [False, menu[1]]
 
         elif req[0] == "order":
 
             item = req[1]
-            in_stock = hungry.stock(item)
+            postcode = req[2]
 
-            if in_stock:
-                postcode = req[2]
-                address_info = hungry.address(postcode)
-                resp = [True, address_info]
-            else:
-                resp = [False, "Item out of stock"]
+            resp = hungry.order(item, postcode)
 
         return resp
 

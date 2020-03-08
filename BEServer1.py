@@ -8,7 +8,7 @@ import urllib.request
 # services program in class (name server)
 class BackEnd(object):
 
-    history = {}
+    history = {"types": [], "restaurants": [], "items": [], "postcodes": []}
 
     actions = [
         "1) list food types",
@@ -22,7 +22,7 @@ class BackEnd(object):
     }
 
     food = {
-            "Spoons": {"Margarita Pizza - £6.00": True, "Cheeseburger - £4.50": True, "Chicken wrap - £3.00": False},
+            "Spoons": {"Margarita pizza - £6.00": True, "Cheeseburger - £4.50": True, "Chicken wrap - £3.00": False},
             "Greggs": {"Sausage roll - £1.00": True, "Steak bake - £1.50": True, "Vegan sausage roll - £1.00": True},
             "Bells": {"Fish and chips - £6.50": True, "Chips - £2.00": False, "Sausage and chips - £6.00": True},
             "Spags": {"La Reine pizza - £8.20": True, "Lasagne - £7.00": True, "Spagetti bolonese - £6.00": True},
@@ -49,37 +49,57 @@ class BackEnd(object):
 
     def restaurants(self, r_type):
 
-        self.history.update({"type": r_type})
         restaurants = self.rest_types
 
         try:
+            print(r_type)
             rests = restaurants[r_type]
+            self.history["types"].append(r_type)
             return [True, rests]
         except KeyError:
-            error = "Type not found"
-            return [False, error]
+            try:
+                rest_keys = restaurants.keys()
+                for key in rest_keys:
+                    if r_type == key.lower():
+                        r_type = key
+                rests = restaurants[r_type]
+                self.history["types"].append(r_type)
+                return [True, rests]
+            except KeyError:
+                error = "Type not found"
+                return [False, error]
 
     def menu(self, rest):
 
-        self.history.update({"restaurant": rest})
         menus = self.food
 
         try:
-            menu = menus[rest]
+            menu = menus[rest].keys()
+            self.history["restaurants"].append(rest)
             return [True, menu]
         except KeyError:
-            error = "Restaurant not found"
-            return [False, error]
+            try:
+                menu_keys = menus.keys()
+                for key in menu_keys:
+                    if rest == key.lower():
+                        rest = key
+                menu = menus[rest].keys()
+                self.history["restaurants"].append(rest)
+                return [True, menu]
+            except KeyError:
+                error = "Restaurant not found"
+                return [False, error]
 
     def stock(self, item):
 
-        restaurant = self.history["restaurant"]
+        rest_history = self.history["restaurants"]
+        restaurant = rest_history[len(rest_history)-1]
         current_stock = self.food[restaurant]
         in_stock = False
         full_item = ""
 
         for meal in current_stock.keys():
-            if item in meal:
+            if item in meal or item in meal.lower():
                 full_item = meal
                 break
 
@@ -113,6 +133,23 @@ class BackEnd(object):
         else:
 
             return [False, resp_js["error"]]
+
+    def order(self, item, postcode):
+
+        in_stock = self.stock(item)
+
+        if in_stock:
+            address_info = self.address(postcode)
+            if address_info[0]:
+                resp = [True, address_info]
+            else:
+                error = "Invalid postcode"
+                resp = [False, error]
+        else:
+            error = "Item out of stock"
+            resp = [False, error]
+
+        return resp
 
 
 # locate name server and link it to this RMI server
