@@ -22,12 +22,55 @@ def check():
 
 @Pyro4.expose
 class FrontEnd(object):
-    def request(self, req):
+
+    def options(self):
+
         hungry = check()
-        print("Thanks for your request: " + req)
+        return hungry.options()
+
+    def request(self, req):
+
+        hungry = check()
         resp = None
-        if req == "list food types":
-            resp = hungry.foodTypes()
+
+        if type(req) == int:
+            if req == 1:
+                resp = ["types", hungry.foodTypes()]
+            else:
+                resp = [False, "cannot retrieve type"]
+
+        elif req[0] == "rests":
+
+            r_type = req[1]
+            rests = hungry.restaurants(r_type)
+
+            if rests[0]:
+                resp = rests[1]
+            else:
+                resp = [False]
+
+        elif req[0] == "menu":
+
+            rest = req[1]
+            menu = hungry.menu(rest)
+
+            if menu[0]:
+                resp = menu[1]
+            else:
+                resp = [False]
+
+        elif req[0] == "order":
+
+            item = req[1]
+            in_stock = hungry.stock(item)
+
+            if in_stock:
+                postcode = req[2]
+                address_info = hungry.address(postcode)
+                resp = [True, address_info]
+            else:
+                resp = [False, "Item out of stock"]
+
         return resp
 
 
