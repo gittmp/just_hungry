@@ -8,16 +8,24 @@ hungry3 = Pyro4.Proxy("PYRONAME:secondaryBE2")
 def check():
     try:
         resp = hungry1.test()
+        print("Primary back-end server selected\n")
+
         return hungry1
+
     except Exception:
         try:
             resp = hungry2.test()
+            print("Secondary back-end server 1 selected\n")
+
             return hungry2
         except Exception:
             try:
                 resp = hungry3.test()
+                print("Secondary back-end server 2 selected\n")
+
                 return hungry3
             except Exception:
+                print("Error: cannot connect to back-end\n")
                 exit(404)
 
 @Pyro4.expose
@@ -64,7 +72,10 @@ class FrontEnd(object):
             item = req[1]
             postcode = req[2]
 
-            resp = hungry.order(item, postcode)
+            try:
+                resp = hungry.order(item, postcode)
+            except Exception:
+                print("resp failed")
 
         return resp
 
