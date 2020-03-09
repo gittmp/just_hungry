@@ -1,46 +1,28 @@
 import Pyro4
 
 
-# link to RMI server through name server
-try:
-    justHungry = Pyro4.Proxy("PYRONAME:frontEnd")
-except Exception:
-    print("Error: cannot connect to name server")
-    exit(1)
-
 # loop while user still wants to make orders - close on 'cancel' or ^C
 try:
     while 1:
-        # display available options (actions)
         try:
-            try:
-                options = justHungry.options()
-            except Exception:
-                print(1)
+            # link to RMI server through name server
+            justHungry = Pyro4.Proxy("PYRONAME:frontEnd")
+
+            # display available options (actions)
+            options = justHungry.options()
 
             for o in options:
                 print(o)
 
             # take input - number of option or name of option
-            request = input("Option number: ").strip()
-
-            if request == "cancel" or request == "CANCEL" or request == "Cancel":
-                print("Closing Just Hungry\n")
-                exit(1)
-
-            else:
-                try:
-                    request = int(request)
-                except ValueError:
-
-                    print("Invalid option: select from above or cancel\n")
-                    continue
+            request = input("Option: ").strip()
 
             # response
             try:
                 response = justHungry.request(request)
             except Exception:
-                print(2)
+                print("Error: Just Hungry server is down")
+                continue
 
             if response[0] == "types":
                 print("\nFood types:")
@@ -51,7 +33,8 @@ try:
                 try:
                     rests = justHungry.request(["rests", select_type])
                 except Exception:
-                    print(3)
+                    print("cannot get type")
+                    continue
 
                 print("\nRestaurants:")
                 if rests[0]:
@@ -62,10 +45,7 @@ try:
                     continue
 
                 select_rest = input("Select restaurant: ").strip()
-                try:
-                    menu = justHungry.request(["menu", select_rest])
-                except Exception:
-                    print(4)
+                menu = justHungry.request(["menu", select_rest])
 
                 if menu[0]:
                     print("\nMenu:")
@@ -78,10 +58,7 @@ try:
                 order_item = input("Select item to order: ").strip()
                 postcode = input("Please input your postcode: ").strip()
 
-                try:
-                    order = justHungry.request(["order", order_item, postcode])
-                except Exception:
-                    print(5)
+                order = justHungry.request(["order", order_item, postcode])
 
                 if order[0]:
                     print()
@@ -92,12 +69,16 @@ try:
                     print("Error:", order[1], "\n")
                     continue
 
+            elif response[0] is None:
+                print(response[1])
+                exit(1)
+
             else:
-                print("Error:", response[1], "\n")
+                print(response[1], "\n")
                 continue
 
         except Exception:
-            print("Error: cannot connect to front end server")
+            print("Error: cannot connect to server")
             exit(1)
 
 except KeyboardInterrupt:

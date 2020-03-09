@@ -40,12 +40,15 @@ class FrontEnd(object):
 
         hungry = check()
         resp = None
+        option = 1
 
-        if type(req) == int or "types" in req:
-            if req == 1:
-                resp = ["types", hungry.foodTypes()]
-            else:
-                resp = [False, "Cannot retrieve type"]
+        print("Request:", req)
+
+        if "cancel" in req or "CANCEL" in req or "Cancel" in req:
+            resp = [None, "Closing Just Hungry"]
+
+        elif "types" in req or "list" in req or "1" in req:
+            resp = ["types", hungry.foodTypes()]
 
         elif req[0] == "rests":
 
@@ -77,6 +80,7 @@ class FrontEnd(object):
             except Exception:
                 print("resp failed")
 
+        print("Response:", resp)
         return resp
 
 
