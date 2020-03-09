@@ -32,6 +32,7 @@ try:
                 try:
                     request = int(request)
                 except ValueError:
+
                     print("Invalid option: select from above or cancel\n")
                     continue
 

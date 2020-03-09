@@ -41,7 +41,7 @@ class FrontEnd(object):
         hungry = check()
         resp = None
 
-        if type(req) == int:
+        if type(req) == int or "types" in req:
             if req == 1:
                 resp = ["types", hungry.foodTypes()]
             else:

@@ -34,7 +34,7 @@ class BackEnd(object):
     food = {
             "Spoons": {"Margarita pizza - £6.00": True, "Cheeseburger - £4.50": True, "Chicken wrap - £3.00": False},
             "Greggs": {"Sausage roll - £1.00": True, "Steak bake - £1.50": True, "Vegan sausage roll - £1.00": True},
-            "Bells": {"Fish and chips - £6.50": True, "Chips - £2.00": False, "Sausage and chips - £6.00": True},
+            "Bells": {"Fish and chips - £6.50": True, "Small chips - £2.00": False, "Sausage and chips - £6.00": True},
             "Spags": {"La Reine pizza - £8.20": True, "Lasagne - £7.00": True, "Spagetti bolonese - £6.00": True},
             "Uno Momento": {"Sharing platter - £10.80": True, "Lasagne - £8.50": False, "Shellfish linguine - £9.00": True},
             "Zizzi": {"Pollo pesto - £8.50": False, "Pizza rustica - £12.00": True, "Carbonara - £9.99": True},
@@ -105,7 +105,6 @@ class BackEnd(object):
         event = ["types"]
 
         try:
-            print(r_type)
             rests = restaurants[r_type]
             self.history["types"].append(r_type)
             event.append(r_type)
