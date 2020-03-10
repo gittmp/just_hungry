@@ -29,17 +29,17 @@ class BackEnd(object):
     ]
 
     rest_types = {
-        "British": ["Spoons", "Greggs", "Bells"],
-        "Italian": ["Spags", "Uno Momento", "Zizzi"],
+        "British": ["Wetherspoons", "Greggs", "Bells"],
+        "Italian": ["La Spaghettata", "Uno Momento", "Zizzi"],
         "Mexican": ["Zaps", "Barrio"]
     }
 
     food = {
-        "Spoons": {"Margarita pizza - £6.00": True, "Cheeseburger - £4.50": True, "Chicken wrap - £3.00": False},
+        "Wetherspoons": {"Margarita pizza - £6.00": True, "Cheeseburger - £4.50": True, "Chicken wrap - £3.00": False},
         "Greggs": {"Sausage roll - £1.00": True, "Steak bake - £1.50": True, "Vegan sausage roll - £1.00": True},
         "Bells": {"Fish and chips - £6.50": True, "Small chips - £2.00": False, "Sausage and chips - £6.00": True},
-        "Spags": {"La Reine pizza - £8.20": True, "Lasagne - £7.00": True, "Spagetti bolonese - £6.00": True},
-        "Uno Momento": {"Sharing platter - £10.80": True, "Lasagne - £8.50": False, "Shellfish linguine - £9.00": True},
+        "La Spaghettata": {"La Reine pizza - £8.20": True, "Lasagna - £7.00": True, "Spaghetti bolognese - £6.00": True},
+        "Uno Momento": {"Sharing platter - £10.80": True, "Lasagna - £8.50": False, "Shellfish linguine - £9.00": True},
         "Zizzi": {"Pollo pesto - £8.50": False, "Pizza rustica - £12.00": True, "Carbonara - £9.99": True},
         "Zaps": {"Burrito - £5.00": True, "Quesadillas - £4.50": True, "Enchiladas - £4.50": True},
         "Barrio": {"Beef taco - £3.80": True, "Vegetarian taco - £3.80": False}
@@ -59,7 +59,6 @@ class BackEnd(object):
         value = event[1]
 
         self.history[key].append(value)
-        print("Updating history:", self.history, "\n")
 
         return 1
 
@@ -74,8 +73,6 @@ class BackEnd(object):
 
         for key in list(self.history.keys()):
             self.history[key] = self.history[key][:stable_len]
-
-        print("Resetting history:", self.history, "\n")
 
         return 1
 
@@ -185,7 +182,6 @@ class BackEnd(object):
 
             except KeyError:
                 error = "Restaurant not found"
-
                 self.reset_history()
 
                 try:
@@ -225,7 +221,6 @@ class BackEnd(object):
 
         if rest_found:
             current_stock = self.food[restaurant]
-            in_stock = [False]
             full_item = ""
             event = ["items"]
 

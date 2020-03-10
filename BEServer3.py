@@ -1,8 +1,11 @@
 # python -m Pyro4.naming
 import Pyro4
+import Pyro4.errors
 import json
 import urllib
 import urllib.request
+import urllib.error
+
 
 primaryServer = Pyro4.Proxy("PYRONAME:primaryBE")
 secondaryServer1 = Pyro4.Proxy("PYRONAME:secondaryBE1")
@@ -11,13 +14,12 @@ secondaryServer1 = Pyro4.Proxy("PYRONAME:secondaryBE1")
 @Pyro4.expose
 # services program in class (name server)
 class BackEnd(object):
-
     try:
         history = primaryServer.get_history()
-    except Exception:
+    except Pyro4.errors.CommunicationError:
         try:
             history = secondaryServer1.get_history()
-        except Exception:
+        except Pyro4.errors.CommunicationError:
             history = {"types": [], "restaurants": [], "items": [], "postcodes": []}
 
     actions = [
@@ -27,35 +29,23 @@ class BackEnd(object):
     ]
 
     rest_types = {
-        "British": ["Spoons", "Greggs", "Bells"],
-        "Italian": ["Spags", "Uno Momento", "Zizzi"],
-        "Mexican": ["Zaps", "Barrio"]
+            "British": ["Wetherspoons", "Greggs", "Bells"],
+            "Italian": ["La Spaghettata", "Uno Momento", "Zizzi"],
+            "Mexican": ["Zaps", "Barrio"]
     }
 
     food = {
-        "Spoons": {"Margarita pizza - £6.00": True, "Cheeseburger - £4.50": True, "Chicken wrap - £3.00": False},
+        "Wetherspoons": {"Margarita pizza - £6.00": True, "Cheeseburger - £4.50": True, "Chicken wrap - £3.00": False},
         "Greggs": {"Sausage roll - £1.00": True, "Steak bake - £1.50": True, "Vegan sausage roll - £1.00": True},
         "Bells": {"Fish and chips - £6.50": True, "Small chips - £2.00": False, "Sausage and chips - £6.00": True},
-        "Spags": {"La Reine pizza - £8.20": True, "Lasagne - £7.00": True, "Spagetti bolonese - £6.00": True},
-        "Uno Momento": {"Sharing platter - £10.80": True, "Lasagne - £8.50": False, "Shellfish linguine - £9.00": True},
+        "La Spaghettata": {"La Reine pizza - £8.20": True, "Lasagna - £7.00": True, "Spaghetti bolognese - £6.00": True},
+        "Uno Momento": {"Sharing platter - £10.80": True, "Lasagna - £8.50": False, "Shellfish linguine - £9.00": True},
         "Zizzi": {"Pollo pesto - £8.50": False, "Pizza rustica - £12.00": True, "Carbonara - £9.99": True},
         "Zaps": {"Burrito - £5.00": True, "Quesadillas - £4.50": True, "Enchiladas - £4.50": True},
         "Barrio": {"Beef taco - £3.80": True, "Vegetarian taco - £3.80": False}
     }
 
     def test(self):
-
-        try:
-            print("Primary history:", primaryServer.history)
-        except Exception:
-            print("Primary server down")
-
-        try:
-            print("Secondary 1 history:", secondaryServer1.get_history())
-        except Exception:
-            print("Secondary server 1 down")
-
-        print("Secondary 2 history:", self.history, "\n")
 
         return 1
 
@@ -69,7 +59,6 @@ class BackEnd(object):
         value = event[1]
 
         self.history[key].append(value)
-        print("Updating history:", self.history, "\n")
 
         return 1
 
@@ -84,8 +73,6 @@ class BackEnd(object):
 
         for key in list(self.history.keys()):
             self.history[key] = self.history[key][:stable_len]
-
-        print("Resetting history:", self.history, "\n")
 
         return 1
 
@@ -113,11 +100,11 @@ class BackEnd(object):
 
             try:
                 primaryServer.update_history(event)
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to primary back-end server")
             try:
                 secondaryServer1.update_history(event)
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to secondary back-end server 1")
 
             return [True, rests]
@@ -136,11 +123,11 @@ class BackEnd(object):
 
                 try:
                     primaryServer.update_history(event)
-                except Exception:
+                except Pyro4.errors.CommunicationError:
                     print("Error: cannot connect to primary back-end server")
                 try:
                     secondaryServer1.update_history(event)
-                except Exception:
+                except Pyro4.errors.CommunicationError:
                     print("Error: cannot connect to secondary back-end server 1")
 
                 return [True, rests]
@@ -162,11 +149,11 @@ class BackEnd(object):
 
             try:
                 primaryServer.update_history(event)
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to primary back-end server")
             try:
                 secondaryServer1.update_history(event)
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to secondary back-end server 1")
 
             return [True, menu]
@@ -184,81 +171,117 @@ class BackEnd(object):
 
                 try:
                     primaryServer.update_history(event)
-                except Exception:
+                except Pyro4.errors.CommunicationError:
                     print("Error: cannot connect to primary back-end server")
                 try:
                     secondaryServer1.update_history(event)
-                except Exception:
+                except Pyro4.errors.CommunicationError:
                     print("Error: cannot connect to secondary back-end server 1")
 
                 return [True, menu]
+
             except KeyError:
                 error = "Restaurant not found"
                 self.reset_history()
 
                 try:
                     primaryServer.reset_history()
-                except Exception:
+                except Pyro4.errors.CommunicationError:
                     print("Error: cannot connect to primary back-end server")
                 try:
                     secondaryServer1.reset_history()
-                except Exception:
+                except Pyro4.errors.CommunicationError:
                     print("Error: cannot connect to secondary back-end server 1")
 
                 return [False, error]
 
     def stock(self, item, rest):
 
+        rest_found = False
+
         if rest is None:
             rest_history = self.history["restaurants"]
             restaurant = rest_history[len(rest_history) - 1]
+            rest_found = True
         else:
-            restaurant = rest
+            rests = list(self.rest_types.values())
+            for i in range(len(rests)):
+                for j in range(len(rests[i])):
+                    if rest == rests[i][j] or rest == rests[i][j].lower():
+                        index = i
+                        restaurant = rests[i][j]
+                        rest_found = True
+            if rest_found:
+                r_type = list(self.rest_types.keys())[index]
+                self.history["types"].append(r_type)
+                self.history["restaurants"].append(restaurant)
+            else:
+                error = "Error: cannot find restaurant"
+                in_stock = [False, error]
+        if rest_found:
+            current_stock = self.food[restaurant]
+            full_item = ""
+            event = ["items"]
 
-        current_stock = self.food[restaurant]
-        in_stock = False
-        full_item = ""
-        event = ["items"]
+            for meal in current_stock.keys():
+                if item in meal or item in meal.lower():
+                    full_item = meal
+                    break
 
-        for meal in current_stock.keys():
-            if item in meal or item in meal.lower():
-                full_item = meal
-                break
+            if len(full_item) > 0:
+                availability = current_stock[full_item]
+                if availability:
+                    in_stock = [True]
+                else:
+                    error = "Error: item out of stock"
+                    in_stock = [False, error]
 
-        if len(full_item) > 0:
-            in_stock = current_stock[full_item]
-            self.history["items"].append(full_item)
-            event.append(full_item)
+                self.history["items"].append(full_item)
+                event.append(full_item)
 
-            try:
-                primaryServer.update_history(event)
-            except Exception:
-                print("Error: cannot connect to primary back-end server")
-            try:
-                secondaryServer1.update_history(event)
-            except Exception:
-                print("Error: cannot connect to secondary back-end server 1")
+                try:
+                    primaryServer.update_history(event)
+                except Pyro4.errors.CommunicationError:
+                    print("Error: cannot connect to primary back-end server")
+                try:
+                    secondaryServer1.update_history(event)
+                except Pyro4.errors.CommunicationError:
+                    print("Error: cannot connect to secondary back-end server 1")
 
-        else:
-            print("Error: no such item")
+            else:
+                error = "Error: no such item"
+                in_stock = [False, error]
 
         return in_stock
 
     def address(self, postcode):
 
-        print("getting url")
         postcode = postcode.replace(" ", "")
+        url = 'https://api.postcodes.io/postcodes/' + postcode
+
         try:
-            url = 'https://api.postcodes.io/postcodes/' + postcode
-        except Exception:
-            print("Falied to retrieve url")
-        print("got url")
-        req = urllib.request.urlopen(url)
+            req = urllib.request.urlopen(url)
+        except urllib.error.HTTPError:
+            error = "Error: not a valid postcode"
+            self.reset_history()
+
+            try:
+                primaryServer.reset_history()
+            except Pyro4.errors.CommunicationError:
+                print("Error: cannot connect to primary back-end server")
+            try:
+                secondaryServer1.reset_history()
+            except Pyro4.errors.CommunicationError:
+                print("Error: cannot connect to secondary back-end server 1")
+
+            return [False, error]
+
         resp_str = req.read().decode('utf-8')
         resp_js = json.loads(resp_str)
         event = ["postcodes"]
 
         if resp_js["status"] == 200:
+
             full_postcode = resp_js["result"]["postcode"]
 
             address_info = [
@@ -270,16 +293,17 @@ class BackEnd(object):
                 resp_js["result"]["parliamentary_constituency"],
                 resp_js["result"]["admin_district"]
             ]
+
             self.history["postcodes"].append(full_postcode)
             event.append(full_postcode)
 
             try:
                 primaryServer.update_history(event)
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to primary back-end server")
             try:
                 secondaryServer1.update_history(event)
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to secondary back-end server 1")
 
             return [True, address_info]
@@ -289,40 +313,34 @@ class BackEnd(object):
 
             try:
                 primaryServer.reset_history()
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to primary back-end server")
             try:
                 secondaryServer1.reset_history()
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to secondary back-end server 1")
 
             return [False, resp_js["error"]]
 
     def order(self, item, postcode, rest):
+
         in_stock = self.stock(item, rest)
 
-        if in_stock:
-            address_info = self.address(postcode)
-            if address_info[0]:
-                resp = [True, address_info]
-            else:
-                error = "Invalid postcode"
-
-                resp = [False, error]
+        if in_stock[0]:
+            resp = self.address(postcode)
         else:
-            error = "Item out of stock"
             self.reset_history()
 
             try:
                 primaryServer.reset_history()
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to primary back-end server")
             try:
                 secondaryServer1.reset_history()
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to secondary back-end server 1")
 
-            resp = [False, error]
+            resp = in_stock
 
         return resp
 
@@ -331,7 +349,7 @@ class BackEnd(object):
 daemon = Pyro4.Daemon()
 ns = Pyro4.locateNS()
 uri = daemon.register(BackEnd)
-ns.register("secondaryBE2", uri)
+ns.register("secondaryBE1", uri)
 
-print("Secondary back-end server 2 ready!")
+print("Secondary back-end server 1 ready!")
 daemon.requestLoop()
