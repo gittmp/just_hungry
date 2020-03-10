@@ -22,7 +22,8 @@ class BackEnd(object):
 
     actions = [
         "1) list food types",
-        "2) order item"
+        "2) View order history",
+        "3) Order item"
     ]
 
     rest_types = {
@@ -93,7 +94,7 @@ class BackEnd(object):
 
         return poss_options
 
-    def foodTypes(self):
+    def food_types(self):
 
         types = self.rest_types.keys()
 
@@ -206,10 +207,14 @@ class BackEnd(object):
 
                 return [False, error]
 
-    def stock(self, item):
+    def stock(self, item, rest):
 
-        rest_history = self.history["restaurants"]
-        restaurant = rest_history[len(rest_history)-1]
+        if rest is None:
+            rest_history = self.history["restaurants"]
+            restaurant = rest_history[len(rest_history) - 1]
+        else:
+            restaurant = rest
+
         current_stock = self.food[restaurant]
         in_stock = False
         full_item = ""
@@ -290,9 +295,9 @@ class BackEnd(object):
 
             return [False, resp_js["error"]]
 
-    def order(self, item, postcode):
+    def order(self, item, postcode, rest):
 
-        in_stock = self.stock(item)
+        in_stock = self.stock(item, rest)
 
         if in_stock:
             address_info = self.address(postcode)
@@ -300,7 +305,6 @@ class BackEnd(object):
                 resp = [True, address_info]
             else:
                 error = "Invalid postcode"
-
                 resp = [False, error]
         else:
             error = "Item out of stock"

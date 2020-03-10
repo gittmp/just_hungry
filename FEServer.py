@@ -39,45 +39,45 @@ class FrontEnd(object):
     def request(self, req):
 
         hungry = check()
-        resp = None
-        option = 1
+        resp = [False, "Error: invalid request"]
 
         print("Request:", req)
 
-        if "cancel" in req or "CANCEL" in req or "Cancel" in req:
+        if "cancel" in req or "Cancel" in req:
             resp = [None, "Closing Just Hungry"]
 
         elif "types" in req or "list" in req or "1" in req:
-            resp = ["types", hungry.foodTypes()]
+            resp = ["types", hungry.food_types()]
+
+        elif "history" in req or "2" in req:
+            resp = ["history", hungry.get_history()]
+
+        elif "order" in req or "3" in req:
+            resp = ["checkout"]
 
         elif req[0] == "rests":
 
             r_type = req[1]
-            rests = hungry.restaurants(r_type)
-
-            if rests[0]:
-                resp = rests
-            else:
-                resp = [False, rests[1]]
+            resp = hungry.restaurants(r_type)
 
         elif req[0] == "menu":
 
             rest = req[1]
-            menu = hungry.menu(rest)
+            resp = hungry.menu(rest)
 
-            if menu[0]:
-                resp = menu
-            else:
-                resp = [False, menu[1]]
-
-        elif req[0] == "order":
+        elif req[0] == "place_ord":
 
             item = req[1]
             postcode = req[2]
 
-            try:
-                resp = hungry.order(item, postcode)
-            except Exception:
+            if len(req) == 3:
+                try:
+                    resp = hungry.order(item, postcode, None)
+                except Exception:
+                    print("resp failed")
+            else:
+                rest = req[3]
+                resp = hungry.order(item, postcode, rest)
                 print("resp failed")
 
         print("Response:", resp)
