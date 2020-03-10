@@ -76,6 +76,34 @@ class BackEnd(object):
 
         return 1
 
+    def reset_all_histories(self):
+
+        self.reset_history()
+
+        try:
+            primaryServer.reset_history()
+        except Pyro4.errors.CommunicationError:
+            print("Error: cannot connect to primary back-end server")
+        try:
+            secondaryServer2.reset_history()
+        except Pyro4.errors.CommunicationError:
+            print("Error: cannot connect to secondary back-end server 2")
+
+        return 1
+
+    def update_all_histories(self, event):
+
+        try:
+            primaryServer.update_history(event)
+        except Pyro4.errors.CommunicationError:
+            print("Error: cannot connect to primary back-end server")
+        try:
+            secondaryServer2.update_history(event)
+        except Pyro4.errors.CommunicationError:
+            print("Error: cannot connect to secondary back-end server 2")
+
+        return 1
+
     def options(self):
 
         poss_options = self.actions
@@ -97,15 +125,7 @@ class BackEnd(object):
             rests = restaurants[r_type]
             self.history["types"].append(r_type)
             event.append(r_type)
-
-            try:
-                primaryServer.update_history(event)
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to primary back-end server")
-            try:
-                secondaryServer2.update_history(event)
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to secondary back-end server 2")
+            self.update_all_histories(event)
 
             return [True, rests]
 
@@ -120,15 +140,7 @@ class BackEnd(object):
                 rests = restaurants[r_type]
                 self.history["types"].append(r_type)
                 event.append(r_type)
-
-                try:
-                    primaryServer.update_history(event)
-                except Pyro4.errors.CommunicationError:
-                    print("Error: cannot connect to primary back-end server")
-                try:
-                    secondaryServer2.update_history(event)
-                except Pyro4.errors.CommunicationError:
-                    print("Error: cannot connect to secondary back-end server 2")
+                self.update_all_histories(event)
 
                 return [True, rests]
 
@@ -146,15 +158,7 @@ class BackEnd(object):
             menu = menus[rest].keys()
             self.history["restaurants"].append(rest)
             event.append(rest)
-
-            try:
-                primaryServer.update_history(event)
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to primary back-end server")
-            try:
-                secondaryServer2.update_history(event)
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to secondary back-end server 2")
+            self.update_all_histories(event)
 
             return [True, menu]
 
@@ -168,30 +172,13 @@ class BackEnd(object):
 
                 self.history["restaurants"].append(rest)
                 event.append(rest)
-
-                try:
-                    primaryServer.update_history(event)
-                except Pyro4.errors.CommunicationError:
-                    print("Error: cannot connect to primary back-end server")
-                try:
-                    secondaryServer2.update_history(event)
-                except Pyro4.errors.CommunicationError:
-                    print("Error: cannot connect to secondary back-end server 2")
+                self.update_all_histories(event)
 
                 return [True, menu]
 
             except KeyError:
                 error = "Restaurant not found"
-                self.reset_history()
-
-                try:
-                    primaryServer.reset_history()
-                except Pyro4.errors.CommunicationError:
-                    print("Error: cannot connect to primary back-end server")
-                try:
-                    secondaryServer2.reset_history()
-                except Pyro4.errors.CommunicationError:
-                    print("Error: cannot connect to secondary back-end server 2")
+                self.reset_all_histories()
 
                 return [False, error]
 
@@ -238,15 +225,7 @@ class BackEnd(object):
 
                 self.history["items"].append(full_item)
                 event.append(full_item)
-
-                try:
-                    primaryServer.update_history(event)
-                except Pyro4.errors.CommunicationError:
-                    print("Error: cannot connect to primary back-end server")
-                try:
-                    secondaryServer2.update_history(event)
-                except Pyro4.errors.CommunicationError:
-                    print("Error: cannot connect to secondary back-end server 2")
+                self.update_all_histories(event)
 
             else:
                 error = "Error: no such item"
@@ -261,18 +240,16 @@ class BackEnd(object):
 
         try:
             req = urllib.request.urlopen(url)
+
         except urllib.error.HTTPError:
             error = "Error: not a valid postcode"
-            self.reset_history()
+            self.reset_all_histories()
 
-            try:
-                primaryServer.reset_history()
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to primary back-end server")
-            try:
-                secondaryServer2.reset_history()
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to secondary back-end server 2")
+            return [False, error]
+
+        except urllib.error.URLError:
+            error = "Error: can't connect to web, please try again later"
+            self.reset_all_histories()
 
             return [False, error]
 
@@ -296,29 +273,12 @@ class BackEnd(object):
 
             self.history["postcodes"].append(full_postcode)
             event.append(full_postcode)
-
-            try:
-                primaryServer.update_history(event)
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to primary back-end server")
-            try:
-                secondaryServer2.update_history(event)
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to secondary back-end server 2")
+            self.update_all_histories(event)
 
             return [True, address_info]
 
         else:
-            self.reset_history()
-
-            try:
-                primaryServer.reset_history()
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to primary back-end server")
-            try:
-                secondaryServer2.reset_history()
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to secondary back-end server 2")
+            self.reset_all_histories()
 
             return [False, resp_js["error"]]
 
@@ -329,16 +289,7 @@ class BackEnd(object):
         if in_stock[0]:
             resp = self.address(postcode)
         else:
-            self.reset_history()
-
-            try:
-                primaryServer.reset_history()
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to primary back-end server")
-            try:
-                secondaryServer2.reset_history()
-            except Pyro4.errors.CommunicationError:
-                print("Error: cannot connect to secondary back-end server 2")
+            self.reset_all_histories()
 
             resp = in_stock
 

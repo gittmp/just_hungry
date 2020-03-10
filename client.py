@@ -1,4 +1,5 @@
 import Pyro4
+import Pyro4.errors
 import time
 
 
@@ -9,7 +10,7 @@ try:
             # link to RMI server through name server
             justHungry = Pyro4.Proxy("PYRONAME:frontEnd")
 
-            # display available options (actions)
+            # display available options (actions) for user
             options = justHungry.options()
 
             for o in options:
@@ -19,24 +20,19 @@ try:
             request = input("Option: ").strip()
 
             # response
-            try:
-                response = justHungry.request(request)
-            except Exception:
-                print("Error: Just Hungry server is down")
-                continue
+            response = justHungry.request(request)
 
             if response[0] == "types":
+                # if types is selected, display types of food available
                 print("\nFood types:")
                 for food_type in response[1]:
                     print(food_type)
 
+                # choose a type of food
                 select_type = input("Select type: ").strip()
-                try:
-                    rests = justHungry.request(["rests", select_type])
-                except Exception:
-                    print("cannot get type")
-                    continue
+                rests = justHungry.request(["rests", select_type])
 
+                # if exists, display available restaurants of that type
                 if rests[0]:
                     print("\nRestaurants:")
                     for rest in rests[1]:
@@ -45,9 +41,11 @@ try:
                     print(rests[1], "\n")
                     continue
 
+                # choose a restaurant to order from
                 select_rest = input("Select restaurant: ").strip()
                 menu = justHungry.request(["menu", select_rest])
 
+                # if available, display the menu for that restaurant
                 if menu[0]:
                     print("\nMenu:")
                     for item in menu[1]:
@@ -56,11 +54,12 @@ try:
                     print(menu[1], "\n")
                     continue
 
+                # select an item from the menu to order, and provide your delivery postcode
                 order_item = input("Select item to order: ").strip()
                 postcode = input("Please input your postcode: ").strip()
-
                 order = justHungry.request(["place_ord", order_item, postcode])
 
+                # if item available, and your postcode is correct, place the order and give confirmation to the customer
                 if order[0]:
                     print()
                     for line in order[1]:
@@ -70,11 +69,15 @@ try:
                     print(order[1], "\n")
                     continue
 
+            # if customer wishes to view their order history
             elif response[0] == "history":
 
-                print("\nOrder history:")
+                # retrieve customers order history
                 orders = list(response[1].values())
                 no_orders = len(orders[0])
+
+                # if history exists, display it
+                print("\nOrder history:")
                 if no_orders > 0:
                     for i in range(no_orders):
                         print("Type = " + orders[0][i] + ", Restaurant = " + orders[1][i])
@@ -83,6 +86,7 @@ try:
                 else:
                     print("No previous orders\n")
 
+            # if customer wishes to
             elif response[0] == "checkout":
                 rest = input("Input restaurant you wish to order from: ")
                 food = input("Input food order you wish to make: ")
@@ -107,7 +111,7 @@ try:
                 continue
 
         except Pyro4.core.errors.CommunicationError:
-            print("Error: cannot connect to server")
+            print("Error: cannot connect to Just Hungry")
             time.sleep(1)
             continue
 

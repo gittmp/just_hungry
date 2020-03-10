@@ -1,4 +1,5 @@
 import Pyro4
+import Pyro4.errors
 
 
 hungry1 = Pyro4.Proxy("PYRONAME:primaryBE")
@@ -12,19 +13,19 @@ def check():
 
         return hungry1
 
-    except Exception:
+    except Pyro4.errors.CommunicationError:
         try:
             resp = hungry2.test()
             print("Secondary back-end server 1 selected\n")
 
             return hungry2
-        except Exception:
+        except Pyro4.errors.CommunicationError:
             try:
                 resp = hungry3.test()
                 print("Secondary back-end server 2 selected\n")
 
                 return hungry3
-            except Exception:
+            except Pyro4.errors.CommunicationError:
                 print("Error: cannot connect to back-end\n")
                 exit(404)
 
@@ -73,12 +74,16 @@ class FrontEnd(object):
             if len(req) == 3:
                 try:
                     resp = hungry.order(item, postcode, None)
-                except Exception:
-                    print("resp failed")
+                except Pyro4.errors.CommunicationError:
+                    error = "Error: cannot place order, please try again later"
+                    resp = [False, error]
             else:
                 rest = req[3]
-                resp = hungry.order(item, postcode, rest)
-                print("resp failed")
+                try:
+                    resp = hungry.order(item, postcode, rest)
+                except Pyro4.errors.CommunicationError:
+                    error = "Error: cannot place order, please try again later"
+                    resp = [False, error]
 
         print("Response:", resp)
         return resp
