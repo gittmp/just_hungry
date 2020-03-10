@@ -51,6 +51,8 @@ class BackEnd(object):
 
     def get_history(self):
 
+        self.reset_all_histories()
+
         return self.history
 
     def update_history(self, event):

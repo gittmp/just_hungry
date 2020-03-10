@@ -51,6 +51,8 @@ class BackEnd(object):
 
     def get_history(self):
 
+        self.reset_all_histories()
+
         return self.history
 
     def update_history(self, event):
@@ -240,24 +242,25 @@ class BackEnd(object):
 
         try:
             req = urllib.request.urlopen(url)
+            source = 1
 
-        except urllib.error.HTTPError:
-            error = "Error: not a valid postcode"
-            self.reset_all_histories()
+        except (urllib.error.HTTPError, urllib.error.URLError):
+            try:
+                url = 'http://api.getthedata.com/postcode/' + postcode
+                req = urllib.request.urlopen(url)
+                source = 2
 
-            return [False, error]
+            except (urllib.error.HTTPError, urllib.error.URLError):
+                error = "Error: cannot validate postcode"
+                self.reset_all_histories()
 
-        except urllib.error.URLError:
-            error = "Error: can't connect to web, please try again later"
-            self.reset_all_histories()
-
-            return [False, error]
+                return [False, error]
 
         resp_str = req.read().decode('utf-8')
         resp_js = json.loads(resp_str)
         event = ["postcodes"]
 
-        if resp_js["status"] == 200:
+        if source == 1 and resp_js["status"] == 200:
 
             full_postcode = resp_js["result"]["postcode"]
 
@@ -269,6 +272,23 @@ class BackEnd(object):
                 resp_js["result"]["admin_ward"],
                 resp_js["result"]["parliamentary_constituency"],
                 resp_js["result"]["admin_district"]
+            ]
+
+            self.history["postcodes"].append(full_postcode)
+            event.append(full_postcode)
+            self.update_all_histories(event)
+
+            return [True, address_info]
+
+        elif source == 2 and resp_js["status"] == "match":
+
+            full_postcode = resp_js["data"]["postcode"]
+
+            address_info = [
+                "Delivering your order to:",
+                "Postcode: " + full_postcode,
+                "Longitude: " + str(resp_js["data"]["longitude"]),
+                "Latitude: " + str(resp_js["data"]["latitude"])
             ]
 
             self.history["postcodes"].append(full_postcode)

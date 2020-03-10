@@ -9,20 +9,20 @@ hungry3 = Pyro4.Proxy("PYRONAME:secondaryBE2")
 def check():
     try:
         resp = hungry1.test()
-        print("Primary back-end server selected\n")
+        print("Primary back-end server selected")
 
         return hungry1
 
     except Pyro4.errors.CommunicationError:
         try:
             resp = hungry2.test()
-            print("Secondary back-end server 1 selected\n")
+            print("Secondary back-end server 1 selected")
 
             return hungry2
         except Pyro4.errors.CommunicationError:
             try:
                 resp = hungry3.test()
-                print("Secondary back-end server 2 selected\n")
+                print("Secondary back-end server 2 selected")
 
                 return hungry3
             except Pyro4.errors.CommunicationError:
@@ -45,16 +45,18 @@ class FrontEnd(object):
         print("Request:", req)
 
         if "cancel" in req or "Cancel" in req:
-            resp = [None, "Closing Just Hungry"]
+            resp = [None, "Cancelling order"]
 
-        elif "types" in req or "list" in req or "1" in req:
-            resp = ["types", hungry.food_types()]
+        elif req[0] == "option":
 
-        elif "history" in req or "2" in req:
-            resp = ["history", hungry.get_history()]
+            if "types" in req[1] or "list" in req[1] or "1" in req[1]:
+                resp = ["types", hungry.food_types()]
 
-        elif "order" in req or "3" in req:
-            resp = ["checkout"]
+            elif "history" in req[1] or "2" in req[1]:
+                resp = ["history", hungry.get_history()]
+
+            elif "order" in req[1] or "3" in req[1]:
+                resp = ["checkout"]
 
         elif req[0] == "rests":
 
