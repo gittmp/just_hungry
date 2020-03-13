@@ -6,9 +6,9 @@
 - Install packages using the command:
 - pip install *module*
 - Modules:
-...- Pyro4
-...- json
-...- urllib
+- *Pyro4*
+- *json*
+- *urllib*
 
 1. Start name server from the command line.
 - Use the following command from a terminal window:
@@ -38,10 +38,10 @@
 - To select an option to continue with, either type in the corresponding number or write out the command (e.g. 'list food types', or 'simply types')
 
 - If you select option 1, you will have to go through the following process to order an item:
-...1. Input the type of food you would like, from the provided list.
-...2. Input the restaurant you would like, from the provided list.
-...3. Input your choice of food item, from the provided list.
-...4. Enter your postcode, for delivery.
+1. Input the type of food you would like, from the provided list.
+2. Input the restaurant you would like, from the provided list.
+3. Input your choice of food item, from the provided list.
+4. Enter your postcode, for delivery.
 - If this is successful, you will be alerted and your address displayed.
 - If an error occurs (e.g. the food item is out of stock) you will be alerted.
 
