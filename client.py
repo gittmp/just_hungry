@@ -11,6 +11,7 @@ try:
 
         # display available options (actions) for user
         try:
+            print("Please choose one of the following options, by typing the number or command:")
             options = justHungry.options()
         except Pyro4.errors.CommunicationError:
             time.sleep(1)
